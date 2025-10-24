@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Desktop Assistant - Advanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 18px 30px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .send-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .voice-btn {
+            background: #f50057;
+            color: white;
+            min-width: 70px;
+            font-size: 24px;
+        }
+
+        .voice-btn:hover:not(:disabled) {
+            background: #c51162;
+            transform: scale(1.05);
+        }
+
+        .voice-btn.listening {
+            background: #4caf50;
+            animation: pulse 1.5s infinite;
+        }
+
+        .voice-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+        }
+
+        .status {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .status.show {
+            display: flex;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .response {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .response.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .response h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .response-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .action-info {
+            font-family: 'Courier New', monospace;
+            background: #2d2d2d;
+            color: #50fa7b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+
+        .examples {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 12px;
+            color: white;
+        }
+
+        .examples h3 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .example-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .example-category {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .example-category h4 {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .example-category ul {
+            list-style: none;
+        }
+
+        .example-category li {
+            padding: 5px 0;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-category li:hover {
+            transform: translateX(5px);
+            color: #fff;
+        }
+
+        .example-category li:before {
+            content: "▸ ";
+            font-weight: bold;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .quick-btn {
+            padding: 10px 20px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quick-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Desktop Assistant</h1>
+            <p class="subtitle">Your personal Google Assistant for Windows</p>
+        </div>
+        
+        <div class="input-section">
+            <div class="input-wrapper">
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    placeholder="Say or type anything... (e.g., 'Open Gmail and show latest email from GitHub')" 
+                />
+                <button class="voice-btn" id="voiceBtn">🎤</button>
+                <button class="send-btn" id="sendBtn">Send</button>
+            </div>
+
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="quickCommand('open microsoft edge')">🌐 Edge</button>
+                <button class="quick-btn" onclick="quickCommand('open gmail')">📧 Gmail</button>
+                <button class="quick-btn" onclick="quickCommand('search youtube for lofi music')">🎵 Lofi</button>
+                <button class="quick-btn" onclick="quickCommand('open calculator')">🔢 Calc</button>
+                <button class="quick-btn" onclick="quickCommand('open file explorer')">📁 Files</button>
+            </div>
+        </div>
+
+        <div class="status" id="status">
+            <div class="spinner"></div>
+            <span id="statusText"></span>
+        </div>
+
+        <div class="response" id="response">
+            <h3>✨ Response:</h3>
+            <div class="response-content" id="responseContent"></div>
+            <div class="action-info" id="actionInfo"></div>
+        </div>
+
+        <div class="examples">
+            <h3>💡 What I Can Do:</h3>
+            <div class="example-grid">
+                <div class="example-category">
+                    <h4>📧 Email & Web</h4>
+                    <ul>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Open Gmail</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Show unread emails</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Email from GitHub</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Compose email</li>
+                    </ul>
+                </div>
+
+                <div class="example-category">
+                    <h4>🎬 YouTube</h4>
+                    <ul>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Search Python tutorials</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Play lofi music</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Open MKBHD channel</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Find workout videos</li>
+                    </ul>
+                </div>
+
+                <div class="example-category">
+                    <h4>🌐 Browsers & Apps</h4>
+                    <ul>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Open Microsoft Edge</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Open Chrome</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Open VS Code</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Open Spotify</li>
+                    </ul>
+                </div>
+
+                <div class="example-category">
+                    <h4>🔍 Search & Social</h4>
+                    <ul>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Search for AI news</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Open Twitter</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Search Instagram</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Weather today</li>
+                    </ul>
+                </div>
+
+                <div class="example-category">
+                    <h4>📁 Files & System</h4>
+                    <ul>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Open Downloads</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Open Documents</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Open Calculator</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Open Notepad</li>
+                    </ul>
+                </div>
+
+                <div class="example-category">
+                    <h4>🎵 Entertainment</h4>
+                    <ul>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Play chill music</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Open Netflix</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Find movie trailers</li>
+                        <li onclick="quickCommand(this.textContent.slice(2))">Open Spotify</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const voiceBtn = document.getElementById('voiceBtn');
+        const status = document.getElementById('status');
+        const statusText = document.getElementById('statusText');
+        const response = document.getElementById('response');
+        const responseContent = document.getElementById('responseContent');
+        const actionInfo = document.getElementById('actionInfo');
+
+        let recognition;
+        let isListening = false;
+        let isProcessing = false;
+
+        // Initialize Speech Recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                isListening = true;
+                voiceBtn.classList.add('listening');
+                voiceBtn.textContent = '🔴';
+                showStatus('Listening... Speak now!', 'loading');
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                userInput.value = transcript;
+                showStatus(`You said: "${transcript}"`, 'success');
+                
+                // Auto-send after voice input
+                setTimeout(() => {
+                    sendMessage();
+                }, 500);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                if (event.error === 'no-speech') {
+                    showStatus('No speech detected. Please try again.', 'error');
+                } else if (event.error === 'not-allowed') {
+                    showStatus('Microphone access denied. Please allow microphone access.', 'error');
+                } else {
+                    showStatus('Error: ' + event.error, 'error');
+                }
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                voiceBtn.classList.remove('listening');
+                voiceBtn.textContent = '🎤';
+            };
+        } else {
+            voiceBtn.disabled = true;
+            voiceBtn.textContent = '❌';
+            voiceBtn.title = 'Speech recognition not supported in this browser. Use Chrome or Edge.';
+        }
+
+        // Voice button click
+        voiceBtn.addEventListener('click', () => {
+            if (!recognition) {
+                showStatus('Speech recognition not available. Use Chrome or Edge browser.', 'error');
+                return;
+            }
+            
+            if (isListening) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.error('Recognition start error:', error);
+                    showStatus('Could not start voice recognition. Try again.', 'error');
+                }
+            }
+        });
+
+        // Send button click
+        sendBtn.addEventListener('click', sendMessage);
+
+        // Enter key press
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !isProcessing) {
+                sendMessage();
+            }
+        });
+
+        // Quick command function
+        function quickCommand(command) {
+            userInput.value = command;
+            sendMessage();
+        }
+        window.quickCommand = quickCommand;
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message || isProcessing) return;
+
+            isProcessing = true;
+            sendBtn.disabled = true;
+            voiceBtn.disabled = true;
+            
+            showStatus('🤖 AI is thinking...', 'loading');
+            response.classList.remove('show');
+
+            try {
+                const res = await fetch('/api/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    showStatus('✅ Action completed successfully!', 'success');
+                    responseContent.textContent = data.result;
+                    actionInfo.textContent = JSON.stringify(data.action, null, 2);
+                    response.classList.add('show');
+                    
+                    // Speak the response if speech synthesis is available
+                    if ('speechSynthesis' in window && data.result) {
+                        const utterance = new SpeechSynthesisUtterance(data.result);
+                        utterance.rate = 1.1;
+                        utterance.pitch = 1;
+                        window.speechSynthesis.speak(utterance);
+                    }
+                } else {
+                    showStatus('❌ Error: ' + data.error, 'error');
+                    responseContent.textContent = 'Failed to execute: ' + data.error;
+                    response.classList.add('show');
+                }
+            } catch (error) {
+                showStatus('⚠️ Connection error. Make sure the server is running on port 3000!', 'error');
+                console.error('Fetch error:', error);
+            } finally {
+                isProcessing = false;
+                sendBtn.disabled = false;
+                voiceBtn.disabled = false;
+                userInput.value = '';
+                userInput.focus();
+            }
+        }
+
+        function showStatus(message, type) {
+            statusText.textContent = message;
+            status.className = `status show ${type}`;
+            
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    status.classList.remove('show');
+                }, 4000);
+            }
+        }
+
+        // Focus input on load
+        window.addEventListener('load', () => {
+            userInput.focus();
+            
+            // Check server health
+            fetch('/api/health')
+                .then(res => res.json())
+                .then(data => {
+                    console.log('✅ Server is ready:', data);
+                })
+                .catch(err => {
+                    console.error('❌ Server not responding:', err);
+                    showStatus('⚠️ Server not connected. Run "npm start" in your terminal.', 'error');
+                });
+        });
+
+        // Keyboard shortcut: Ctrl+Space to activate voice
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.code === 'Space') {
+                e.preventDefault();
+                voiceBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>
