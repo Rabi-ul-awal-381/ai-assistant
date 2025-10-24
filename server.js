@@ -115,6 +115,19 @@ const APP_PATHS = {
     'settings': 'ms-settings:',
 };
 
+// Cross-platform opener to avoid Windows 'start' quirks opening a terminal
+function openExternal(target, cb) {
+    const platform = process.platform;
+    if (platform === 'win32') {
+        // Use empty title after start to avoid it being treated as the window title
+        exec(`cmd /c start "" "${target}"`, cb);
+    } else if (platform === 'darwin') {
+        exec(`open "${target}"`, cb);
+    } else {
+        exec(`xdg-open "${target}"`, cb);
+    }
+}
+
 // Function to call Ollama with better JSON extraction
 async function callOllama(userMessage) {
     try {
@@ -163,11 +176,10 @@ async function executeAction(actionData) {
                     // Try exact path first
                     exec(`"${appPath}"`, (error) => {
                         if (error) {
-                            // Fallback to start command
-                            exec(`${openCmd} "${appPath}"`, (err) => {
+                            // Fallbacks using cross-platform opener
+                            openExternal(appPath, (err) => {
                                 if (err) {
-                                    // Last resort: try just the name
-                                    exec(`${openCmd} ${appName}`, (finalErr) => {
+                                    openExternal(appName, (finalErr) => {
                                         if (finalErr) reject(new Error(`Could not open ${appName}`));
                                         else resolve(`Opened ${actionData.app}`);
                                     });
@@ -181,7 +193,7 @@ async function executeAction(actionData) {
                     });
                 } else {
                     // Try to open by name directly
-                    exec(`${openCmd} ${appName}`, (error) => {
+                    openExternal(appName, (error) => {
                         if (error) reject(new Error(`Could not find app: ${appName}`));
                         else resolve(`Opened ${actionData.app}`);
                     });
@@ -196,7 +208,7 @@ async function executeAction(actionData) {
                 } else {
                     gmailUrl += '#inbox';
                 }
-                exec(`${openCmd} "${gmailUrl}"`, (error) => {
+                openExternal(gmailUrl, (error) => {
                     if (error) reject(error);
                     else {
                         let msg = 'Opened Gmail';
@@ -209,7 +221,7 @@ async function executeAction(actionData) {
             case 'youtube_search':
                 const ytQuery = encodeURIComponent(actionData.query);
                 const ytUrl = `https://www.youtube.com/results?search_query=${ytQuery}`;
-                exec(`${openCmd} "${ytUrl}"`, (error) => {
+                openExternal(ytUrl, (error) => {
                     if (error) reject(error);
                     else resolve(`Searching YouTube for: ${actionData.query}`);
                 });
@@ -222,7 +234,7 @@ async function executeAction(actionData) {
                 } else if (actionData.video) {
                     youtubeUrl += `watch?v=${actionData.video}`;
                 }
-                exec(`${openCmd} "${youtubeUrl}"`, (error) => {
+                openExternal(youtubeUrl, (error) => {
                     if (error) reject(error);
                     else resolve(`Opened YouTube: ${actionData.channel || actionData.video}`);
                 });
@@ -239,7 +251,7 @@ async function executeAction(actionData) {
                     musicUrl = `https://www.youtube.com/results?search_query=${musicQuery}`;
                 }
                 
-                exec(`${openCmd} "${musicUrl}"`, (error) => {
+                openExternal(musicUrl, (error) => {
                     if (error) reject(error);
                     else resolve(`Playing: ${actionData.query}`);
                 });
@@ -264,7 +276,7 @@ async function executeAction(actionData) {
                     socialUrl += `/${actionData.user}`;
                 }
                 
-                exec(`${openCmd} "${socialUrl}"`, (error) => {
+                openExternal(socialUrl, (error) => {
                     if (error) reject(error);
                     else resolve(`Opened ${actionData.platform}`);
                 });
@@ -276,7 +288,7 @@ async function executeAction(actionData) {
                 if (actionData.subject) mailtoUrl += `&su=${encodeURIComponent(actionData.subject)}`;
                 if (actionData.body) mailtoUrl += `&body=${encodeURIComponent(actionData.body)}`;
                 
-                exec(`${openCmd} "${mailtoUrl}"`, (error) => {
+                openExternal(mailtoUrl, (error) => {
                     if (error) reject(error);
                     else resolve('Opened Gmail compose');
                 });
@@ -292,7 +304,7 @@ async function executeAction(actionData) {
                 const engine = searchEngines[actionData.engine?.toLowerCase()] || searchEngines.google;
                 const searchUrl = engine + encodeURIComponent(actionData.query);
                 
-                exec(`${openCmd} "${searchUrl}"`, (error) => {
+                openExternal(searchUrl, (error) => {
                     if (error) reject(error);
                     else resolve(`Searching for: ${actionData.query}`);
                 });
@@ -306,7 +318,7 @@ async function executeAction(actionData) {
                     url += `/search?q=${encodeURIComponent(actionData.search)}`;
                 }
                 
-                exec(`${openCmd} "${url}"`, (error) => {
+                openExternal(url, (error) => {
                     if (error) reject(error);
                     else resolve(`Opened ${url}`);
                 });
