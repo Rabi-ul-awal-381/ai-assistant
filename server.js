@@ -401,7 +401,7 @@ const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`
 ╔════════════════════════════════════════╗
-║  🤖 AI Desktop Assistant is RUNNING!  ║
+║  🤖 AI Desktop Assistant is RUNNING!   ║
 ╚════════════════════════════════════════╝
 
 🌐 Open: http://localhost:${PORT}
